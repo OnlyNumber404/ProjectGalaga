@@ -38,13 +38,13 @@ import java.util.List;
 	        for (Enemy e : enemies) e.draw(g);
 	    }
 
-	    // update positions; panelWidth perlu untuk detect boundary
+	    // update positions untuk detect boundary
 	    public void update(int panelWidth) {
 	        if (enemies.isEmpty()) return;
 
 	        // cek calon posisi ujung kanan/ kiri bila semua digeser
 	        int delta = dir * speed;
-	        // find minX and maxX among enemies
+	        // cari minX and maxX dari antara enemies
 	        int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
 	        for (Enemy e : enemies) {
 	            minX = Math.min(minX, e.getX());
