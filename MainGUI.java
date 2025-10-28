@@ -19,8 +19,6 @@ import Week_8_Lab.*;
 
 
 public class MainGUI {
-
-    // frame utama dan panel game
     private JFrame frame;
     private JPanel Gameplaypanel;
     private Triangle triangle; // objek pemain (pesawat segitiga)
@@ -36,7 +34,6 @@ public class MainGUI {
 
 
     public static void main(String[] args) {
-        // entry point program, bikin GUI di event dispatch thread
         EventQueue.invokeLater(new Runnable() {
             public void run() {
                 try {
@@ -51,14 +48,14 @@ public class MainGUI {
 
 
     public MainGUI() {
-        // konstruktor -> panggil inisialisasi GUI
+// panggil inisialisasi GUInya
         initialize();
     }
 
     /**
-     * Initialize the contents of the frame.
+     * Initialize
      *
-     * Di sini kita atur layout, tombol START, panel game, listener, dan timer.
+     *  atur layout, tombol START, panel game, listener, dan timer.
      */
     private void initialize() {
         frame = new JFrame();
@@ -129,11 +126,9 @@ public class MainGUI {
         Gameplaypanel.setBackground(new Color(255, 255, 255));
         Gameplaypanel.setFocusable(true); // biar bisa nerima input keyboard
         MainPanel.add(Gameplaypanel, BorderLayout.CENTER);
-
-        // setup timer game loop ~60 FPS (16 ms)
         gameTimer = new javax.swing.Timer(16, ev -> {
 
-            // update posisi pemain berdasarkan flag keyboard
+            // update posisi pemain berdasarkan keyboard
             if (triangle != null) {
                 int panelW = Gameplaypanel.getWidth();
                 int speed = 4; // kecepatan pemain (pesawat) kanamn -kiri nya
@@ -160,10 +155,10 @@ public class MainGUI {
                         gameTimer.stop();
                         System.out.println("Game Over: musuh nabrak pesawatmu");
                     }
-                    // tambahan: kalo ada musuh yang sampai ke level Y player -> game over
+                    // tambahan: kalo ada musuh yang sampai ke level y player  game over
                     if (enemyManager.anyReachedY(triangle.GetYCoord())) {
                         gameTimer.stop();
-                        System.out.println("Game Over: musuh ");
+                        System.out.println("Game Over: musuh sudah mencapai level ");
                     }
                 }
             }
@@ -179,7 +174,7 @@ public class MainGUI {
         int panelwidth = Gameplaypanel.getWidth();
         int panelheight = Gameplaypanel.getHeight();
 
-        // inisialisasi objek pemain (triangle)
+        // inisialisasi objek pemain/player (triangle)
         triangle = new Triangle();
         triangle.SetWidth(40);
         triangle.SetHeight(40);
