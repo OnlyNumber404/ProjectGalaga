@@ -10,28 +10,30 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import Week_8_Lab.*;
 
+
 public class MainGUI {
-
     private JFrame frame;
-
     private JPanel Gameplaypanel;
+    private Triangle triangle; // objek pemain (pesawat segitiga)
+    private Rectangle rectangle; // objek peluru (Laser)
 
-    private Triangle triangle;
+    private EnemyManager enemyManager; // mengatur musuhnya
 
-    private EnemyManager enemyManager;
-
-    // flag buat deteksi tombol kiri / kanan ditekan
+    // flag input keyboard
     private boolean leftPressed = false;
     private boolean rightPressed = false;
+    private boolean spacePressed = false;
 
-    // timer utama buat loop game (update dan repaint)
+    // game loop timer (dipakai untuk update & repaint)
     private javax.swing.Timer gameTimer;
+
 
     public static void main(String[] args) {
         EventQueue.invokeLater(new Runnable() {
@@ -48,13 +50,18 @@ public class MainGUI {
 
 
     public MainGUI() {
+// panggil inisialisasi GUInya
         initialize();
     }
 
-
+    /**
+     * Initialize
+     *
+     *  atur layout, tombol START, panel game, listener, dan timer.
+     */
     private void initialize() {
         frame = new JFrame();
-        frame.setResizable(false); // biar ukuran window gak bisa diubah
+        frame.setResizable(false);;
         frame.setBounds(100, 100, 450, 600);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -67,12 +74,13 @@ public class MainGUI {
         MainPanel.add(ButtonPanel, BorderLayout.SOUTH);
         ButtonPanel.setLayout(new BorderLayout(0, 0));
 
- 
         JButton btnNewButton = new JButton("START");
         btnNewButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                startGame(); 
+                // pas tombol diklik: mulai game
+                startGame();
+                makelaser();
             }
         });
         btnNewButton.setFont(btnNewButton.getFont().deriveFont(30f));
@@ -80,110 +88,140 @@ public class MainGUI {
         btnNewButton.setPreferredSize(new Dimension(80, 40));
         ButtonPanel.add(btnNewButton);
 
-        // panel tempat gambar pesawat dan musuh
         Gameplaypanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
+                // custom drawing setiap repaint
                 super.paintComponent(g);
-                // gambar pesawat 
+                // gambar pemain (triangle)
                 if (triangle != null) {
-                    triangle.UpdateTrianglePoints(); // update posisi tiap frame
-                    g.setColor(triangle.GetShapeColor());
+                    triangle.UpdateTrianglePoints(); // pastikan titik segitiga ter-update
+                    g.setColor(triangle.GetColor());
                     g.fillPolygon(triangle.GetXPoints(), triangle.GetYPoints(), triangle.TRIANGLE_POINTS);
                 }
-                // gambar semua musuh lewat EnemyManager
+                if (spacePressed) {
+                	g.setColor(rectangle.GetColor());
+                	g.fillRect(rectangle.GetXCoord(), rectangle.GetYCoord(), rectangle.GetWidth(), rectangle.GetHeight());
+                }
+                // gambar semua musuh lewat enemyManager
                 if (enemyManager != null) {
                     enemyManager.drawAll(g);
                 }
             }
         };
 
-        // listener keyboard buat gerak kiri/kanan
+        // keylistener keyboard untuk kontrol kiri/kanan
         Gameplaypanel.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
+                // cek tombol yang ditekan, set flag biar per-frame update gerak
                 if (e.getKeyCode() == KeyEvent.VK_LEFT) leftPressed = true;
                 else if (e.getKeyCode() == KeyEvent.VK_RIGHT) rightPressed = true;
                 else if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-                    // tombol spasi nanti bisa buat nembak(denny
+                    // kosong sekarang, bisa ditambahin buat menembak nanti
                 }
             }
 
             @Override
             public void keyReleased(KeyEvent e) {
-                // reset flag kalau tombol dilepas
+                // reset flag pas tombol dilepas
                 if (e.getKeyCode() == KeyEvent.VK_LEFT) leftPressed = false;
                 else if (e.getKeyCode() == KeyEvent.VK_RIGHT) rightPressed = false;
+                else if (e.getKeyCode() == KeyEvent.VK_SPACE) spacePressed = true;
             }
         });
 
-        // setting tampilan panel game
-        Gameplaypanel.setBackground(new Color(255, 255, 255)); //
-        Gameplaypanel.setFocusable(true); // wajib biar key listener aktif
+        Gameplaypanel.setBackground(new Color(255, 255, 255));
+        Gameplaypanel.setFocusable(true); // biar bisa nerima input keyboard
         MainPanel.add(Gameplaypanel, BorderLayout.CENTER);
+        gameTimer = new javax.swing.Timer(16, ev -> {
 
-        // timer utama buat update gerakan dan cek collision
-        gameTimer = new javax.swing.Timer(16, ev -> { 
-            // gerakin pesawat berdasarkan tombol
+            // update posisi pemain berdasarkan keyboard
             if (triangle != null) {
                 int panelW = Gameplaypanel.getWidth();
-                int speed = 4;
+                int speed = 4; // kecepatan pemain (pesawat) kanamn -kiri nya
                 int newX = triangle.GetXCoord();
                 if (leftPressed) newX -= speed;
                 if (rightPressed) newX += speed;
 
-                // batasin supaya pesawat gak keluar layar
+                // batasin agar pemain(peswat) gak keluar panel
                 newX = Math.max(0, Math.min(newX, panelW - triangle.GetWidth()));
                 if (newX != triangle.GetXCoord()) {
                     triangle.SetXCoord(newX);
                 }
             }
+            
+            //update laser
+            if (rectangle != null) {
+            	int speed = 4;
+            	int newY = rectangle.GetYCoord();
+            	if (spacePressed) {
+            		newY-=speed;
+            	}
+            	rectangle.SetYCoord(newY);
+            	
+            }
 
-            // cek tabrakan antara musuh dan pesawat
-            if (triangle != null && enemyManager != null) {
-                Polygon playerPoly = new Polygon(triangle.GetXPoints(), triangle.GetYPoints(), triangle.TRIANGLE_POINTS);
+            // update musuh
+            if (enemyManager != null) {
+                enemyManager.update(Gameplaypanel.getWidth());
 
-                // kalau musuh nabrak pesawat
-                if (enemyManager.checkCollisionWithPolygon(playerPoly)) {
-                    gameTimer.stop();
-                    System.out.println(" Game Over: musuh nabrak pesawatmu!");
-                }
-
-                // kalau musuh udah nyampe posisi pesawat
-                if (enemyManager.anyReachedY(triangle.GetYCoord())) {
-                    gameTimer.stop();
-                    System.out.println(" Game Over: musuh udah sampai ke bawah!");
+                // cek collision antara player polygon dan semua enemynya
+                if (triangle != null) {
+                    Polygon playerPoly = new Polygon(triangle.GetXPoints(), triangle.GetYPoints(), triangle.TRIANGLE_POINTS);
+                    if (enemyManager.checkCollisionWithPolygon(playerPoly)) {
+                        // game over kalau ada yang nabrak player
+                        gameTimer.stop();
+                        System.out.println("Game Over: musuh nabrak pesawatmu");
+                    }
+                    // tambahan: kalo ada musuh yang sampai ke level y player  game over
+                    if (enemyManager.anyReachedY(triangle.GetYCoord())) {
+                        gameTimer.stop();
+                        System.out.println("Game Over: musuh sudah mencapai level ");
+                    }
                 }
             }
 
-            // refresh tampilan setiap frame
+            // repaint panel tiap frame
             Gameplaypanel.repaint();
         });
         gameTimer.start();
     }
 
-
     private void startGame() {
+        // dipanggil pas tombol START diklik
         int panelwidth = Gameplaypanel.getWidth();
         int panelheight = Gameplaypanel.getHeight();
 
-        // buat pesawat 
+        // inisialisasi objek pemain/player 
         triangle = new Triangle();
         triangle.SetWidth(40);
         triangle.SetHeight(40);
-        triangle.SetShapeColor(Color.green);
-        triangle.SetXCoord((panelwidth - triangle.GetWidth()) / 2);
-        triangle.SetYCoord(panelheight - 100);
-        triangle.UpdateTrianglePoints();
+        triangle.SetColor(Color.green);
+        triangle.SetXCoord((panelwidth - triangle.GetWidth()) / 2); // mulai di tengah layar
+        triangle.SetYCoord(panelheight - 100); // posisi Y agak di atas bawah panel
+        triangle.UpdateTrianglePoints(); // set titik polygon
+        
+        // inisialisasi musuh
+        int leftMargin = 20; // jarak kiri dari edge
+        int topY = 20; // posisi Y paling atas musuh
+        int count = 5; // jumlah musuh di baris pertama (bisa disesuaikan)
+        enemyManager = new EnemyManager(count, leftMargin, topY, Triangle.BASE_SIZE);
 
-        // set posisi awal musuh
-        int leftMargin = 20;
-        int topY = 20;
-
-        // panggil enemy manager buat generate dan gerakin musuh
-        enemyManager = new EnemyManager(15, leftMargin, topY, Triangle.BASE_SIZE, Gameplaypanel);
-
-        // kasih fokus ke panel biar keyboard langsung berfungsi
+        // minta fokus ke panel supaya keyboard bisa dipakai tanpa klik lagi
         Gameplaypanel.requestFocusInWindow();
+    }
+    
+    private void makelaser() {
+    	int panelwidth = Gameplaypanel.getWidth();
+    	int panelheight = Gameplaypanel.getWidth();
+    	
+    	// inisialisasi
+    	rectangle = new Rectangle();
+    	rectangle.SetWidth(5);
+    	rectangle.SetHeight(40);
+    	rectangle.SetColor(Color.red);
+    	rectangle.SetXCoord(triangle.GetXCoord() + (triangle.GetWidth()/2)-3);
+    	rectangle.SetYCoord(triangle.GetYCoord() - 40);
     }
 }

@@ -1,35 +1,50 @@
 package Week_9;
 
-import Week_8_Lab.*;
-
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 
 public class Enemy {
+    // posisi musuh (koordinat kiri atas)
+    private int x;
+    private int y;
 
-    private Shape shape;
+    // ukuran musuh (lebar dan tinggi sama, karena bentuknya kotak)
+    private int width;
+    private int height;
 
+    // warna musuh
+    private Color color;
 
-    public Enemy(Shape shape) {
-        this.shape = shape;
+    // konstruktor buat bikin objek musuh baru
+    public Enemy(int x, int y, int size, Color color) {
+        this.x = x; // posisi awal X
+        this.y = y; // posisi awal Y
+        this.width = size; // ukuran lebar
+        this.height = size; // ukuran tinggi
+        this.color = color; // warna kotak musuh
     }
 
-    public Shape getShape() {
-        return shape;
+    // fungsi buat gambar musuh di layar
+    public void draw(Graphics g) {
+        g.setColor(color); // atur warna
+        g.fillRect(x, y, width, height); // gambar kotak musuh
     }
 
-    // ambil posisi x musuh
-    public int getX() { return shape.GetXCoord(); }
-    // ambil posisi y musuh
-    public int getY() { return shape.GetYCoord(); }
-    // ambil lebar musuh
-    public int getWidth() { return shape.GetWidth(); }
-    // ambil tinggi musuh
-    public int getHeight() { return shape.GetHeight(); }
-
-    // buat gerakin musuh
-    // dx = geser ke kanan (+) atau kiri (-)
-    // dy = geser ke bawah (+) atau atas (-)
-    public void move(int dx, int dy) {
-        shape.SetXCoord(shape.GetXCoord() + dx);
-        shape.SetYCoord(shape.GetYCoord() + dy);
+    // fungsi buat mindahin posisi musuh (gerak ke kanan/kiri/bawah)
+    public void translate(int dx, int dy) {
+        this.x += dx; // geser di sumbu X
+        this.y += dy; // geser di sumbu Y
     }
+
+    // fungsi buat ambil area kotak musuh (dipakai buat deteksi tabrakan)
+    public Rectangle getBounds() {
+        return new Rectangle(x, y, width, height);
+    }
+
+    // getter (pengambil data) posisi dan ukuran musuh
+    public int getX() { return x; }
+    public int getY() { return y; }
+    public int getWidth() { return width; }
+    public int getHeight() { return height; }
 }
